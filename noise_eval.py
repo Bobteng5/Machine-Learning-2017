@@ -61,11 +61,11 @@ EVE_MULTIPLIER = 2  # Train Eve 2x for every step of Alice/Bob
 # Train until either max loops or Alice/Bob "good enough":
 MAX_TRAINING_LOOPS = 850000
     # Exit when Bob loss < BOB_LOSS_THRESH and Eve > EVE_LOSS_THRESH bits
-BOB_LOSS_THRESH_PERCENT = 1. / 160
 BOB_LOSS_THRESH_PERCENT = 1. / 800
+BOB_LOSS_THRESH_PERCENT = 1. / 160
 BOB_LOSS_THRESH = BOB_LOSS_THRESH_PERCENT * TEXT_SIZE  # Exit when Bob loss < 0.02 and Eve > 7.7 bits
-EVE_LOSS_THRESH_PERCENT = 0.4
 EVE_LOSS_THRESH_PERCENT = 0.43
+EVE_LOSS_THRESH_PERCENT = 0.4
 EVE_LOSS_THRESH = EVE_LOSS_THRESH_PERCENT * TEXT_SIZE
 
 # Logging and evaluation.
@@ -209,8 +209,8 @@ class AdversarialCrypto(object):
     batch_size = tf.placeholder_with_default(FLAGS.batch_size, shape=[])
     out_c = tf.random_normal([batch_size, TEXT_SIZE], 0, 0.1, dtype=tf.float32)
     self.encrypted = self.model('alice', in_m, in_k)
-    self.encrypted_with_noise = self.encrypted
-    #self.encrypted_with_noise = tf.add(self.encrypted, out_c)
+    #self.encrypted_with_noise = self.encrypted
+    self.encrypted_with_noise = tf.add(self.encrypted, out_c)
     self.decrypted = self.model('bob', self.encrypted_with_noise, in_k)
     self.eve_out = self.model('eve', self.encrypted, None)
 
@@ -326,7 +326,7 @@ def doeval2(s, ac, n, ite):
 	sys.stdout.flush()
 
 def save_parameters(s, ac, ite):
-	filepath = 'checkpoint/v-1/cry-ite{:d}'.format(ite)
+	filepath = 'checkpoint/cry-ite{:d}'.format(ite)
 	filepath = ac.saver.save(s, filepath)
 	return filepath
 
