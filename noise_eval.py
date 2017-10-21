@@ -326,7 +326,7 @@ def doeval2(s, ac, n, ite):
 	sys.stdout.flush()
 
 def save_parameters(s, ac, ite):
-	filepath = 'checkpoint/cry-ite{:d}'.format(ite)
+	filepath = 'checkpoint/v-2/cry-ite{:d}'.format(ite)
 	filepath = ac.saver.save(s, filepath)
 	return filepath
 
@@ -337,8 +337,8 @@ def train_until_thresh(s, ac):
     for _ in xrange(ITERS_PER_ACTOR):
       key = batch_of_value(batch_size, TEXT_SIZE)
       s.run(ac.bob_optimizer, feed_dict={ac.in_k: key})
-    key = batch_of_value(batch_size, TEXT_SIZE, fixed=True)
     for _ in xrange(ITERS_PER_ACTOR * EVE_MULTIPLIER):
+      key = batch_of_value(batch_size, TEXT_SIZE, fixed=False)
       s.run(ac.eve_optimizer, feed_dict={ac.in_k: key})
     if j % (PRINT_EVERY * 20) == 0:
       filepath = save_parameters(s, ac, j)
