@@ -290,7 +290,7 @@ def distance(a):
 	sums_10 = 0
 	size = a.shape[0]
 	for i in range(size):
-		for j in range(size):
+		for j in range(i, size):
 			dist = np.where(np.abs(a[i] - a[j]) > 0.5, 1, 0)
 			dist = np.sum(dist)
 			if dist > 1e-3:
@@ -299,7 +299,7 @@ def distance(a):
 			dist = np.sum(dist)
 			if dist > 1e-3:
 				sums_10 += 1
-	return sums_05, sums_10
+	return sums_05 * 2, sums_10 * 2
 def distance_v2(a):
 	#maximum return value is size*(size-1)
 	sums = 0
@@ -365,26 +365,28 @@ def train_and_evaluate():
     print('# Iter Bob_Recon_Error Eve_Recon_Error')
 
     if train_until_thresh(s, ac):
-      batch_size = FLAGS.batch_size
+      pass
+
+    batch_size = FLAGS.batch_size
+    key = batch_of_value(batch_size, TEXT_SIZE, fixed=True)
+    for _ in xrange(EVE_EXTRA_ROUNDS):
+      s.run(ac.eve_optimizer, feed_dict={ac.in_k: key})
+    print('Loss after eve extra training:')
+    doeval(s, ac, EVAL_BATCHES * 2, 0)
+    for _ in xrange(NUMBER_OF_EVE_RESETS):
+      print('Resetting Eve')
+      s.run(ac.reset_eve_vars)
+      eve_counter = 0
+      eve_reconstruct_error = []
       key = batch_of_value(batch_size, TEXT_SIZE, fixed=True)
-      for _ in xrange(EVE_EXTRA_ROUNDS):
-        s.run(ac.eve_optimizer, feed_dict={ac.in_k: key})
-      print('Loss after eve extra training:')
-      doeval(s, ac, EVAL_BATCHES * 2, 0)
-      for _ in xrange(NUMBER_OF_EVE_RESETS):
-        print('Resetting Eve')
-        s.run(ac.reset_eve_vars)
-        eve_counter = 0
-        eve_reconstruct_error = []
-        key = batch_of_value(batch_size, TEXT_SIZE, fixed=True)
-        for _ in xrange(RETRAIN_EVE_LOOPS):
-          for _ in xrange(RETRAIN_EVE_ITERS):
-            eve_counter += 1
-            s.run(ac.eve_optimizer, feed_dict={ac.in_k: key})
-          _, tmp = doeval(s, ac, EVAL_BATCHES, eve_counter)
-          eve_reconstruct_error += [tmp]
-        doeval(s, ac, EVAL_BATCHES, eve_counter)
-        print('The lowest reconstruction error of Eve is {:.3f}.'.format(min(eve_reconstruct_error)))
+      for _ in xrange(RETRAIN_EVE_LOOPS):
+        for _ in xrange(RETRAIN_EVE_ITERS):
+          eve_counter += 1
+          s.run(ac.eve_optimizer, feed_dict={ac.in_k: key})
+        _, tmp = doeval(s, ac, EVAL_BATCHES, eve_counter)
+        eve_reconstruct_error += [tmp]
+      doeval(s, ac, EVAL_BATCHES, eve_counter)
+      print('The lowest reconstruction error of Eve is {:.3f}.'.format(min(eve_reconstruct_error)))
 
 
 def main(unused_argv):
